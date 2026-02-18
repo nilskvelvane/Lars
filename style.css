@@ -1,0 +1,231 @@
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Manrope:wght@500;700;800&display=swap");
+
+:root {
+  --bg-top: #f9fff2;
+  --bg-mid: #d6ebff;
+  --bg-bottom: #a8c6db;
+  --panel: rgba(10, 29, 41, 0.78);
+  --panel-strong: rgba(29, 13, 17, 0.87);
+  --panel-border: rgba(240, 255, 246, 0.34);
+  --ink: #f4fbff;
+  --ink-soft: rgba(244, 251, 255, 0.82);
+  --accent: #ffbe3f;
+  --accent-2: #2ec4b6;
+  --danger: #ff6b6b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 14% 10%, rgba(255, 255, 255, 0.72), transparent 36%),
+    radial-gradient(circle at 84% 20%, rgba(247, 193, 109, 0.34), transparent 34%),
+    linear-gradient(160deg, var(--bg-top), var(--bg-mid) 48%, var(--bg-bottom));
+}
+
+.shell {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  background:
+    linear-gradient(150deg, rgba(44, 106, 136, 0.82), rgba(75, 144, 175, 0.8)),
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.045) 0 12px,
+      rgba(18, 58, 82, 0.06) 12px 24px
+    );
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+}
+
+.hero {
+  padding: 0.65rem 1rem 0.55rem;
+  border-bottom: 1px solid rgba(223, 248, 255, 0.38);
+}
+
+.hero h1 {
+  margin: 0;
+  font-family: "Baloo 2", cursive;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  font-size: clamp(1.55rem, 2.35vw, 2.2rem);
+  line-height: 1;
+}
+
+.hero p {
+  margin: 0.35rem 0 0;
+  max-width: 920px;
+  color: var(--ink-soft);
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+}
+
+.stage-wrap {
+  position: relative;
+  min-height: 0;
+  padding: 0;
+  background:
+    linear-gradient(180deg, rgba(194, 226, 241, 0.3), rgba(164, 202, 220, 0.44));
+}
+
+#gameCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  background: #a4c8da;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 37, 53, 0.36);
+  border-radius: 0;
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.panel {
+  width: min(640px, calc(100% - 2rem));
+  padding: 1rem 1rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  box-shadow: 0 20px 70px rgba(6, 10, 16, 0.55);
+}
+
+.panel h2 {
+  margin: 0;
+  font-family: "Baloo 2", cursive;
+  letter-spacing: 0.035em;
+  font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+}
+
+.panel p {
+  margin: 0.55rem 0 0;
+  color: rgba(240, 252, 255, 0.94);
+  line-height: 1.35;
+}
+
+.panel-danger {
+  background: var(--panel-strong);
+  border-color: rgba(255, 191, 197, 0.54);
+}
+
+.btn-primary {
+  margin-top: 0.8rem;
+  border: 1px solid rgba(255, 237, 204, 0.67);
+  border-radius: 12px;
+  padding: 0.62rem 0.95rem;
+  min-width: 165px;
+  cursor: pointer;
+  font-family: "Baloo 2", cursive;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #1e2128;
+  background:
+    linear-gradient(180deg, #ffd67d, var(--accent));
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.btn-primary:active {
+  transform: translateY(1px) scale(0.995);
+}
+
+.hint {
+  font-size: 0.92rem;
+  color: rgba(230, 248, 255, 0.85);
+}
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.58rem;
+  padding: 0.7rem 1rem 0.2rem;
+}
+
+.pill {
+  border: 1px solid rgba(217, 252, 255, 0.36);
+  border-radius: 999px;
+  padding: 0.35rem 0.78rem;
+  font-size: 0.9rem;
+  background: rgba(11, 47, 67, 0.33);
+  color: var(--ink-soft);
+}
+
+.pill span {
+  margin-left: 0.32rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1rem;
+  padding: 0.72rem 1rem 0.95rem;
+  color: rgba(226, 248, 255, 0.93);
+  font-size: 0.84rem;
+  border-top: 1px solid rgba(180, 230, 255, 0.21);
+}
+
+.touch-controls {
+  display: none;
+}
+
+@media (pointer: coarse), (max-width: 920px) {
+  .touch-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+    padding: 0.62rem 1rem 0;
+  }
+
+  .touch-controls button {
+    border: 1px solid rgba(233, 252, 255, 0.45);
+    border-radius: 12px;
+    padding: 0.63rem 0.45rem;
+    font-family: "Baloo 2", cursive;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    color: #eff8ff;
+    background: linear-gradient(180deg, rgba(36, 94, 124, 0.95), rgba(20, 60, 82, 0.96));
+    touch-action: manipulation;
+    user-select: none;
+  }
+
+  .touch-controls button.active {
+    box-shadow: 0 0 0 2px rgba(255, 233, 176, 0.62) inset;
+    filter: saturate(1.15) brightness(1.08);
+  }
+
+  .controls {
+    font-size: 0.79rem;
+  }
+}

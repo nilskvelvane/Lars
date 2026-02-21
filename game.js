@@ -1954,7 +1954,7 @@
       const x = enemy.x + enemy.w * 0.5;
       const y = enemy.y - 24;
 
-      const text = "Hold kjeft gamle mann";
+      const text = "Slutt å stirr gamle mann";
       ctx.font = "700 15px Manrope";
       const textW = ctx.measureText(text).width;
 

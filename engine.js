@@ -978,6 +978,22 @@
     var isTouchDevice = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
     if (!isTouchDevice) { return; }
 
+    var ov = document.createElement('div');
+    ov.style.cssText =
+      'display:none;position:fixed;inset:0;z-index:9999;' +
+      'background:rgba(0,0,0,0.85);color:#fff;' +
+      'font-family:monospace;font-size:22px;' +
+      'flex-direction:column;align-items:center;justify-content:center;gap:16px;' +
+      'text-align:center;' +
+      'padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) ' +
+      'env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
+    ov.innerHTML =
+      '<span>Please rotate to ' + req + '</span>' +
+      '<span style="font-size:52px;font-family:sans-serif">' +
+      (req === 'portrait' ? '⟳' : '⟲') + '</span>';
+    document.body.appendChild(ov);
+    self._orientationOverlayEl = ov;
+
     function check() {
       var w          = window.innerWidth;
       var h          = window.innerHeight;
@@ -986,9 +1002,13 @@
 
       if (!ok) {
         self._orientationPaused = true;
-      } else if (self._orientationPaused) {
-        self._orientationPaused = false;
-        self._lastTime = performance.now(); // prevent dt spike on resume
+        if (self._orientationOverlayEl) { self._orientationOverlayEl.style.display = 'flex'; }
+      } else {
+        if (self._orientationPaused) {
+          self._orientationPaused = false;
+          self._lastTime = performance.now();
+        }
+        if (self._orientationOverlayEl) { self._orientationOverlayEl.style.display = 'none'; }
       }
     }
 
@@ -1002,25 +1022,7 @@
     check();
   };
 
-  Engine.prototype._drawOrientationOverlay = function () {
-    var ctx = this._ctx;
-    var w   = this._opts.width;
-    var h   = this._opts.height;
-    var req = this._opts.orientation;
-
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = 'rgba(0,0,0,0.85)';
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle    = '#fff';
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = '22px monospace';
-    ctx.fillText('Please rotate to ' + req, w / 2, h / 2 - 24);
-    ctx.font = '52px sans-serif';
-    ctx.fillText(req === 'portrait' ? '⟳' : '⟲', w / 2, h / 2 + 34);
-    ctx.restore();
-  };
+  Engine.prototype._drawOrientationOverlay = function () {};
 
   // ---------------------------------------------------------------------------
   // 14. FPS Display — smoothed, screen-space, top-left corner

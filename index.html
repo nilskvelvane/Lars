@@ -2,7 +2,9 @@
 <html lang="no">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
   <title>Beskytt trampolinen</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -21,6 +23,7 @@
         <p>Piler / A-D for bevegelse, Space / W / pil opp for hopp.</p>
         <p class="hint">Du hopper automatisk når du passerer trampolinen.</p>
         <button id="startButton" type="button" class="btn-primary">Start spill</button>
+        <p class="credits">Laget av David og Nils Olav · <a href="https://github.com/nilskvelvane/Lars" target="_blank" rel="noopener">GitHub</a></p>
       </div>
     </div>
 
@@ -33,9 +36,9 @@
     </div>
 
     <section class="touch-controls" aria-label="Berøringskontroller">
-      <button type="button" data-action="left">Venstre</button>
-      <button type="button" data-action="jump">Boing</button>
-      <button type="button" data-action="right">Høyre</button>
+      <button type="button" data-action="left" aria-label="Venstre">◀</button>
+      <button type="button" data-action="jump" aria-label="Hopp">▲</button>
+      <button type="button" data-action="right" aria-label="Høyre">▶</button>
     </section>
   </div>
 

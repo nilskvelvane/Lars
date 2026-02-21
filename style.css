@@ -34,6 +34,7 @@ body {
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
 }
 
 #gameCanvas {
@@ -110,9 +111,18 @@ body {
   color: rgba(230, 248, 255, 0.85);
 }
 
+.credits {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 12px;
+}
+.credits a {
+  color: inherit;
+}
+
 .touch-controls {
   display: none;
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
@@ -123,25 +133,28 @@ body {
   .touch-controls {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.65rem;
-    padding: 0.62rem 1rem 1rem;
+    gap: 0.5rem;
+    padding: 0.4rem 1.5rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
   }
 
   .touch-controls button {
-    border: 1px solid rgba(233, 252, 255, 0.45);
-    border-radius: 12px;
-    padding: 0.63rem 0.45rem;
-    font-family: "Baloo 2", cursive;
-    font-size: 0.95rem;
-    letter-spacing: 0.02em;
-    color: #eff8ff;
-    background: linear-gradient(180deg, rgba(36, 94, 124, 0.95), rgba(20, 60, 82, 0.96));
+    border: 1.5px solid rgba(255, 255, 255, 0.45);
+    border-radius: 14px;
+    padding: 0.45rem;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.18);
+    opacity: 0.38;
     touch-action: manipulation;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    transition: opacity 0.08s;
   }
 
   .touch-controls button.active {
-    box-shadow: 0 0 0 2px rgba(255, 233, 176, 0.62) inset;
-    filter: saturate(1.15) brightness(1.08);
+    opacity: 0.82;
+    background: rgba(255, 200, 80, 0.25);
   }
 }

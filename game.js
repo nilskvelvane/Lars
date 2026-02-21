@@ -24,13 +24,14 @@
 
   const GAME_WIDTH = 1536;
   const GAME_HEIGHT = 720;
-  const viewport = {
-    scale: 1,
-    offsetX: 0,
-    offsetY: 0,
-    pixelWidth: GAME_WIDTH,
-    pixelHeight: GAME_HEIGHT,
-  };
+
+  var engine = new Engine({
+    canvas:       '#gameCanvas',
+    width:        GAME_WIDTH,
+    height:       GAME_HEIGHT,
+    background:   '#000000',
+    maxDeltaTime: 0.04
+  });
 
   const FLOOR_Y = 618;
   const PLAY_LEFT = 22;
@@ -119,12 +120,7 @@
 
   const BOING_COLORS = ["#ffd166", "#ff7b72", "#4cc9f0", "#b8f2e6", "#fff4a3"];
 
-  const input = {
-    left: false,
-    right: false,
-    jumpHeld: false,
-    jumpPressed: false,
-  };
+  var input = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 
   const larsPhoto = new Image();
   let larsPhotoReady = false;
@@ -155,7 +151,6 @@
     spawnTimer: 1.35,
     nextEnemyId: 1,
     cryTimer: 0.6,
-    cameraShake: 0,
     flash: 0,
     trampolineKick: 0,
     trampolineWaves: [],
@@ -172,17 +167,9 @@
   };
 
   syncHud();
-  resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
 
   startButton?.addEventListener("click", startRound);
   retryButton?.addEventListener("click", startRound);
-
-  bindKeyboard();
-  bindTouchControls();
-
-  let lastTime = performance.now();
-  requestAnimationFrame(gameLoop);
 
   function createPlayer() {
     return {
@@ -214,156 +201,38 @@
     }));
   }
 
-  function resizeCanvas() {
-    const host = canvas.parentElement;
-    const hostWidth = host ? host.clientWidth : 0;
-    const hostHeight = host ? host.clientHeight : 0;
-    const cssWidth = Math.max(1, hostWidth || window.innerWidth);
-    const cssHeight = Math.max(1, hostHeight || window.innerHeight);
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var touchInput = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 
-    canvas.width = Math.max(1, Math.floor(cssWidth * dpr));
-    canvas.height = Math.max(1, Math.floor(cssHeight * dpr));
-
-    viewport.pixelWidth = canvas.width;
-    viewport.pixelHeight = canvas.height;
-
-    viewport.scale = Math.min(canvas.width / GAME_WIDTH, canvas.height / GAME_HEIGHT);
-    viewport.offsetX = (canvas.width - GAME_WIDTH * viewport.scale) * 0.5;
-    viewport.offsetY = (canvas.height - GAME_HEIGHT * viewport.scale) * 0.5;
-  }
-
-  function bindKeyboard() {
-    const PREVENT = new Set([
-      "ArrowLeft",
-      "ArrowRight",
-      "ArrowUp",
-      "ArrowDown",
-      "KeyA",
-      "KeyD",
-      "KeyW",
-      "Space",
-      "Enter",
-    ]);
-
-    window.addEventListener(
-      "keydown",
-      (event) => {
-        if (PREVENT.has(event.code)) {
-          event.preventDefault();
-        }
-
-        const startKey = event.code === "Enter" || event.code === "Space";
-        if (startKey && state.mode !== "playing" && !event.repeat) {
-          startRound();
-          return;
-        }
-
-        if (state.mode !== "playing") {
-          return;
-        }
-
-        if (event.code === "ArrowLeft" || event.code === "KeyA") {
-          input.left = true;
-          state.player.face = -1;
-        }
-        if (event.code === "ArrowRight" || event.code === "KeyD") {
-          input.right = true;
-          state.player.face = 1;
-        }
-        if (event.code === "ArrowUp" || event.code === "KeyW" || event.code === "Space") {
-          input.jumpHeld = true;
-          if (!event.repeat) {
-            input.jumpPressed = true;
-          }
-        }
-      },
-      { passive: false },
-    );
-
-    window.addEventListener(
-      "keyup",
-      (event) => {
-        if (PREVENT.has(event.code)) {
-          event.preventDefault();
-        }
-
-        if (event.code === "ArrowLeft" || event.code === "KeyA") {
-          input.left = false;
-        }
-        if (event.code === "ArrowRight" || event.code === "KeyD") {
-          input.right = false;
-        }
-        if (event.code === "ArrowUp" || event.code === "KeyW" || event.code === "Space") {
-          input.jumpHeld = false;
-        }
-      },
-      { passive: false },
-    );
-  }
-
-  function bindTouchControls() {
-    if (!touchButtons.length) {
-      return;
-    }
-
-    const releaseAll = () => {
-      for (const button of touchButtons) {
-        button.classList.remove("active");
+  (function bindTouchButtons() {
+    touchButtons.forEach(function (btn) {
+      var action = btn.dataset.action;
+      btn.addEventListener("pointerdown", function (e) {
+        e.preventDefault();
+        if (state.mode !== "playing") { startRound(); }
+        btn.classList.add("active");
+        touchInput[action === "jump" ? "jumpHeld" : action] = true;
+        if (action === "jump") { touchInput.jumpPressed = true; }
+        if (action === "left")  { state.player.face = -1; }
+        if (action === "right") { state.player.face =  1; }
+      });
+      function release() {
+        btn.classList.remove("active");
+        touchInput[action === "jump" ? "jumpHeld" : action] = false;
       }
-      input.left = false;
-      input.right = false;
-      input.jumpHeld = false;
-    };
+      btn.addEventListener("pointerup",     release);
+      btn.addEventListener("pointercancel", release);
+      btn.addEventListener("pointerleave",  release);
+    });
+    window.addEventListener("pointerup",     function () { touchInput.left = touchInput.right = touchInput.jumpHeld = false; });
+    window.addEventListener("pointercancel", function () { touchInput.left = touchInput.right = touchInput.jumpHeld = false; });
 
-    for (const button of touchButtons) {
-      const action = button.dataset.action;
-      if (!action) {
-        continue;
+    // Also handle Enter/Space to start the game (not in playing mode)
+    window.addEventListener("keydown", function (e) {
+      if ((e.code === "Enter" || e.code === "Space") && state.mode !== "playing" && !e.repeat) {
+        startRound();
       }
-
-      const activate = (event) => {
-        event.preventDefault();
-
-        if (state.mode !== "playing") {
-          startRound();
-        }
-
-        button.classList.add("active");
-        if (action === "left") {
-          input.left = true;
-          state.player.face = -1;
-        } else if (action === "right") {
-          input.right = true;
-          state.player.face = 1;
-        } else if (action === "jump") {
-          input.jumpHeld = true;
-          input.jumpPressed = true;
-        }
-      };
-
-      const deactivate = (event) => {
-        event.preventDefault();
-        button.classList.remove("active");
-
-        if (action === "left") {
-          input.left = false;
-        } else if (action === "right") {
-          input.right = false;
-        } else if (action === "jump") {
-          input.jumpHeld = false;
-        }
-      };
-
-      button.addEventListener("pointerdown", activate, { passive: false });
-      button.addEventListener("pointerup", deactivate, { passive: false });
-      button.addEventListener("pointercancel", deactivate, { passive: false });
-      button.addEventListener("pointerleave", deactivate, { passive: false });
-    }
-
-    window.addEventListener("pointerup", releaseAll, { passive: true });
-    window.addEventListener("pointercancel", releaseAll, { passive: true });
-  }
+    });
+  })();
 
   function ensureAudio() {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -541,7 +410,6 @@
     state.waveMessage = "";
     state.spawnTimer = 1.35;
     state.nextEnemyId = 1;
-    state.cameraShake = 0;
     state.flash = 0;
     state.trampolineKick = 0;
     state.trampolineWaves.length = 0;
@@ -603,25 +471,19 @@
     syncHud();
   }
 
-  function gameLoop(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.04);
-    lastTime = now;
-
-    update(dt);
-    render();
-
-    input.jumpPressed = false;
-    requestAnimationFrame(gameLoop);
-  }
-
   function update(dt) {
+    input.left        = engine.input.isDown("left")      || touchInput.left;
+    input.right       = engine.input.isDown("right")     || touchInput.right;
+    input.jumpHeld    = engine.input.isDown("jump")      || touchInput.jumpHeld;
+    input.jumpPressed = engine.input.justPressed("jump") || touchInput.jumpPressed;
+    touchInput.jumpPressed = false;
+
     state.time += dt;
     updateClouds(dt);
     updateKids(dt);
     updateEffects(dt);
 
     state.flash = Math.max(0, state.flash - dt * 2.4);
-    state.cameraShake = Math.max(0, state.cameraShake - dt * 28);
     state.waveBannerTimer = Math.max(0, state.waveBannerTimer - dt);
 
     if (state.mode === "title") {
@@ -765,11 +627,11 @@
         player.vy = -TRAMPOLINE.boostBounce;
         playBoing(true);
         triggerTrampolineImpact(1.1);
-        state.cameraShake = Math.max(state.cameraShake, 10);
+        engine.camera.shake(10, 0.36);
       } else {
         player.vy = -PLAYER.groundJump;
         playBoing(false);
-        state.cameraShake = Math.max(state.cameraShake, 5);
+        engine.camera.shake(5, 0.18);
       }
       player.onGround = false;
       player.onTrampoline = overTrampoline;
@@ -807,7 +669,7 @@
 
       playBoing(boosted);
       triggerTrampolineImpact(boosted ? 1.08 : autoPassBounce ? 0.9 : 1.0);
-      state.cameraShake = Math.max(state.cameraShake, boosted ? 10 : 7);
+      engine.camera.shake(boosted ? 10 : 7, boosted ? 0.36 : 0.25);
     } else if (nowBottom >= FLOOR_Y) {
       player.y = FLOOR_Y - player.h;
       player.vy = 0;
@@ -1150,7 +1012,7 @@
     const points = 110 + (state.combo - 1) * 35 + duoBonus;
     state.score += points;
     state.flash = 0.2;
-    state.cameraShake = Math.max(state.cameraShake, 8 + Math.min(10, state.combo));
+    engine.camera.shake(8 + Math.min(10, state.combo), (8 + Math.min(10, state.combo)) / 28);
 
     const player = state.player;
     const playerCenter = player.x + player.w * 0.5;
@@ -1260,25 +1122,6 @@
   }
 
   function render() {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, viewport.pixelWidth, viewport.pixelHeight);
-
-    const frameSky = ctx.createLinearGradient(0, 0, 0, viewport.pixelHeight);
-    frameSky.addColorStop(0, "#f5fcff");
-    frameSky.addColorStop(0.5, "#def1fb");
-    frameSky.addColorStop(1, "#c2e0ef");
-    ctx.fillStyle = frameSky;
-    ctx.fillRect(0, 0, viewport.pixelWidth, viewport.pixelHeight);
-
-    ctx.save();
-    ctx.translate(viewport.offsetX, viewport.offsetY);
-    ctx.scale(viewport.scale, viewport.scale);
-
-    if (state.cameraShake > 0) {
-      const shake = state.cameraShake;
-      ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
-    }
-
     drawBackground();
     drawBuildings();
     drawCourtyard();
@@ -1302,8 +1145,6 @@
       ctx.fillStyle = `rgba(255, 255, 255, ${state.flash * 0.45})`;
       ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     }
-
-    ctx.restore();
   }
 
   function drawBackground() {
@@ -2216,29 +2057,16 @@
     return enemy.type === "scooter" || enemy.type === "scooter_duo";
   }
 
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
-
-  function randRange(min, max) {
-    return min + Math.random() * (max - min);
-  }
-
-  function lerp(a, b, t) {
-    return a + (b - a) * clamp(t, 0, 1);
-  }
+  function clamp(v, lo, hi) { return engine.clamp(v, lo, hi); }
+  function lerp(a, b, t)    { return engine.lerp(a, b, t); }
+  function randRange(lo, hi) { return engine.random(lo, hi); }
 
   function choose(items) {
     return items[Math.floor(Math.random() * items.length)];
   }
 
   function rectsOverlap(a, b) {
-    return (
-      a.x < b.x + b.w &&
-      a.x + a.w > b.x &&
-      a.y < b.y + b.h &&
-      a.y + a.h > b.y
-    );
+    return engine.collide.rectRect(a.x, a.y, a.w, a.h, b.x, b.y, b.w, b.h);
   }
 
   function roundedRect(context, x, y, width, height, radius) {
@@ -2272,4 +2100,12 @@
 
     return color;
   }
+
+  engine.addScene("game", {
+    onEnter: function () {},
+    update:  function (dt) { update(dt); },
+    draw:    function (ctx) { render(); }
+  });
+  engine.switchScene("game");
+  engine.start();
 })();

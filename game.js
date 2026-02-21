@@ -4,10 +4,6 @@
   const canvas = document.getElementById("gameCanvas");
   const titleOverlay = document.getElementById("titleOverlay");
   const gameOverOverlay = document.getElementById("gameOverOverlay");
-  const scoreValue = document.getElementById("scoreValue");
-  const bestValue = document.getElementById("bestValue");
-  const comboValue = document.getElementById("comboValue");
-  const waveValue = document.getElementById("waveValue");
   const gameOverScore = document.getElementById("gameOverScore");
   const startButton = document.getElementById("startButton");
   const retryButton = document.getElementById("retryButton");
@@ -462,7 +458,10 @@
     playGameOverSting();
 
     if (gameOverScore) {
-      gameOverScore.textContent = `Score: ${state.score}`;
+      const isNewBest = state.score >= state.best;
+      gameOverScore.textContent = isNewBest
+        ? `Ny rekord: ${state.score} poeng!`
+        : `${state.score} poeng — rekord: ${state.best}`;
     }
     if (gameOverOverlay) {
       gameOverOverlay.hidden = false;
@@ -1144,6 +1143,10 @@
     if (state.flash > 0) {
       ctx.fillStyle = `rgba(255, 255, 255, ${state.flash * 0.45})`;
       ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    }
+
+    if (state.mode === "playing" || state.mode === "gameover") {
+      drawScore();
     }
   }
 
@@ -2039,22 +2042,28 @@
   }
 
   function syncHud() {
-    if (scoreValue) {
-      scoreValue.textContent = String(state.score);
-    }
-    if (bestValue) {
-      bestValue.textContent = String(state.best);
-    }
-    if (comboValue) {
-      comboValue.textContent = state.combo > 0 ? `x${state.combo}` : "0";
-    }
-    if (waveValue) {
-      waveValue.textContent = String(state.wave);
-    }
+    // Score is drawn on canvas; best is shown on game-over overlay.
   }
 
   function isScooterEnemy(enemy) {
     return enemy.type === "scooter" || enemy.type === "scooter_duo";
+  }
+
+  function drawScore() {
+    const pad = 28;
+    const label = String(state.score);
+
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+
+    ctx.font = "800 52px Baloo 2";
+    ctx.fillStyle = "rgba(10, 30, 45, 0.28)";
+    ctx.fillText(label, GAME_WIDTH - pad + 2, pad + 2);
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+    ctx.fillText(label, GAME_WIDTH - pad, pad);
+
+    ctx.textBaseline = "alphabetic";
   }
 
   function clamp(v, lo, hi) { return engine.clamp(v, lo, hi); }

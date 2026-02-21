@@ -7,51 +7,37 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="shell">
-    <header class="hero">
-      <h1>Beskytt trampolinen</h1>
-    </header>
+  <div class="stage-wrap">
+    <canvas
+      id="gameCanvas"
+      width="1536"
+      height="720"
+      aria-label="2D arkadespill: Beskytt trampolinen"
+    ></canvas>
 
-    <section class="stage-wrap">
-      <canvas
-        id="gameCanvas"
-        width="1536"
-        height="720"
-        aria-label="2D arkadespill: Beskytt trampolinen"
-      ></canvas>
-
-      <div class="overlay" id="titleOverlay">
-        <div class="panel">
-          <h2>Klar?</h2>
-          <p>Piler / A-D for bevegelse, Space / W / pil opp for hopp.</p>
-          <p class="hint">Du hopper automatisk naar du passerer trampolinen.</p>
-          <button id="startButton" type="button" class="btn-primary">Start spill</button>
-        </div>
+    <div class="overlay" id="titleOverlay">
+      <div class="panel">
+        <h2>Beskytt trampolinen</h2>
+        <p>Piler / A-D for bevegelse, Space / W / pil opp for hopp.</p>
+        <p class="hint">Du hopper automatisk når du passerer trampolinen.</p>
+        <button id="startButton" type="button" class="btn-primary">Start spill</button>
       </div>
+    </div>
 
-      <div class="overlay" id="gameOverOverlay" hidden>
-        <div class="panel panel-danger" role="dialog" aria-modal="true" aria-label="Spillet er over">
-          <p>Lars gir opp Nordstrand og flytter hjem til Grünerløkka.</p>
-          <p class="hint" id="gameOverScore"></p>
-          <button id="retryButton" type="button" class="btn-primary">Prøv igjen</button>
-        </div>
+    <div class="overlay" id="gameOverOverlay" hidden>
+      <div class="panel panel-danger" role="dialog" aria-modal="true" aria-label="Spillet er over">
+        <p>Lars gir opp Nordstrand og flytter hjem til Grünerløkka.</p>
+        <p class="hint" id="gameOverScore"></p>
+        <button id="retryButton" type="button" class="btn-primary">Prøv igjen</button>
       </div>
-    </section>
-
-    <section class="hud" aria-live="polite">
-      <div class="pill">Poeng <span id="scoreValue">0</span></div>
-      <div class="pill">Best <span id="bestValue">0</span></div>
-      <div class="pill">Kombo <span id="comboValue">0</span></div>
-      <div class="pill">Bølge <span id="waveValue">1</span></div>
-    </section>
+    </div>
 
     <section class="touch-controls" aria-label="Berøringskontroller">
       <button type="button" data-action="left">Venstre</button>
       <button type="button" data-action="jump">Boing</button>
       <button type="button" data-action="right">Høyre</button>
     </section>
-
-  </main>
+  </div>
 
   <script src="engine.js"></script>
   <script src="game.js"></script>

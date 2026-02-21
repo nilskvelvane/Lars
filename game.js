@@ -26,7 +26,8 @@
     width:        GAME_WIDTH,
     height:       GAME_HEIGHT,
     background:   '#000000',
-    maxDeltaTime: 0.04
+    maxDeltaTime: 0.04,
+    orientation:  'landscape'
   });
 
   const FLOOR_Y = 618;

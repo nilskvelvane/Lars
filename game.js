@@ -18,7 +18,7 @@
     throw new Error("Klarte ikke opprette 2D-kontekst.");
   }
 
-  const GAME_WIDTH = 1536;
+  const GAME_WIDTH = 1280;
   const GAME_HEIGHT = 720;
 
   var engine = new Engine({
@@ -27,7 +27,7 @@
     height:       GAME_HEIGHT,
     background:   '#000000',
     maxDeltaTime: 0.04,
-    orientation:  'landscape'
+    orientation:  'any'
   });
 
   const FLOOR_Y = 618;
@@ -36,7 +36,7 @@
 
   const TRAMPOLINE = {
     x: GAME_WIDTH * 0.5,
-    y: 520,
+    y: 590,
     width: 250,
     height: 28,
     bounce: 760,
@@ -1049,7 +1049,7 @@
       maxLife: 0.86,
       phase: randRange(0, Math.PI * 2),
       color: "#fff2ad",
-      size: 34,
+      size: 42,
       weight: 800,
     });
 
@@ -1062,7 +1062,7 @@
       maxLife: 0.9,
       phase: randRange(0, Math.PI * 2),
       color: "#f5fbff",
-      size: 27,
+      size: 33,
       weight: 700,
     });
 
@@ -1076,7 +1076,7 @@
         maxLife: 0.84,
         phase: randRange(0, Math.PI * 2),
         color: "#baf7ff",
-        size: 21,
+        size: 27,
         weight: 800,
       });
     }
@@ -1091,7 +1091,7 @@
         maxLife: 0.88,
         phase: randRange(0, Math.PI * 2),
         color: "#ffe7ae",
-        size: 22,
+        size: 27,
         weight: 800,
       });
     }
@@ -1124,8 +1124,8 @@
   function render() {
     drawBackground();
     drawBuildings();
-    drawCourtyard();
     drawTrampoline(false);
+    drawCourtyard();
     drawKids();
     drawEnemies();
     drawPlayer(state.player);
@@ -1152,49 +1152,20 @@
   }
 
   function drawBackground() {
-    const w = GAME_WIDTH;
-
+    // Norwegian overcast-ish sky — muted but not grey
     const sky = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
-    sky.addColorStop(0, "#f9fdff");
-    sky.addColorStop(0.45, "#e3f4ff");
-    sky.addColorStop(1, "#c8e4f2");
+    sky.addColorStop(0, "#e8f4fa");
+    sky.addColorStop(0.45, "#d0e8f5");
+    sky.addColorStop(1, "#c2d8e8");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
+    // Warm morning light band at top
     const lightBand = ctx.createLinearGradient(0, 0, 0, 260);
-    lightBand.addColorStop(0, "rgba(255, 249, 228, 0.78)");
+    lightBand.addColorStop(0, "rgba(255, 249, 228, 0.68)");
     lightBand.addColorStop(1, "rgba(255, 249, 228, 0)");
     ctx.fillStyle = lightBand;
     ctx.fillRect(0, 0, GAME_WIDTH, 260);
-
-    ctx.fillStyle = "rgba(177, 206, 222, 0.54)";
-    ctx.beginPath();
-    ctx.moveTo(0, 420);
-    ctx.lineTo(w * 0.125, 394);
-    ctx.lineTo(w * 0.25, 406);
-    ctx.lineTo(w * 0.4, 384);
-    ctx.lineTo(w * 0.567, 402);
-    ctx.lineTo(w * 0.717, 390);
-    ctx.lineTo(w * 0.867, 408);
-    ctx.lineTo(w, 392);
-    ctx.lineTo(w, 520);
-    ctx.lineTo(0, 520);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(157, 188, 208, 0.58)";
-    ctx.beginPath();
-    ctx.moveTo(0, 456);
-    ctx.lineTo(w * 0.15, 438);
-    ctx.lineTo(w * 0.3, 448);
-    ctx.lineTo(w * 0.467, 430);
-    ctx.lineTo(w * 0.633, 446);
-    ctx.lineTo(w * 0.8, 434);
-    ctx.lineTo(w, 452);
-    ctx.lineTo(w, 528);
-    ctx.lineTo(0, 528);
-    ctx.closePath();
-    ctx.fill();
 
     for (const cloud of state.clouds) {
       const bob = Math.sin(state.time * 0.5 + cloud.phase) * 3;
@@ -1212,24 +1183,173 @@
   }
 
   function drawBuildings() {
-    const rightBuildingX = GAME_WIDTH - 370;
+    // === Main apartment block — full-width brick, 6 storeys ===
+    const bldgY = 100;
+    const bldgH = 370; // bottom edge at y=470
 
-    drawBuilding(70, 228, 300, 272, "#e5dfd6", "#cec5bb");
-    drawBuilding(rightBuildingX, 210, 290, 290, "#e2d5cd", "#c8b9af");
+    // Brick facade
+    ctx.fillStyle = "#b5705a";
+    ctx.fillRect(0, bldgY, GAME_WIDTH, bldgH);
 
-    ctx.fillStyle = "rgba(144, 118, 88, 0.36)";
-    let postIndex = 0;
-    for (let x = 18; x < GAME_WIDTH + 22; x += 42) {
-      const h = 26 + ((postIndex * 11) % 8);
-      roundedRect(ctx, x, 480 - h, 18, h, 3);
-      ctx.fill();
-      postIndex += 1;
+    // Concrete coping at parapet top
+    ctx.fillStyle = "#d0c8be";
+    ctx.fillRect(0, bldgY, GAME_WIDTH, 14);
+
+    // Concrete base band (bottom)
+    ctx.fillStyle = "#d0c8be";
+    ctx.fillRect(0, bldgY + bldgH - 46, GAME_WIDTH, 46);
+
+    // Left-side shadow for depth
+    const leftShadow = ctx.createLinearGradient(0, 0, 110, 0);
+    leftShadow.addColorStop(0, "rgba(0, 0, 0, 0.20)");
+    leftShadow.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = leftShadow;
+    ctx.fillRect(0, bldgY, 110, bldgH);
+
+    // Window grid: 6 rows × 14 columns
+    const winCols = 14;
+    const winRows = 6;
+    const winW = 52;
+    const winH = 36;
+    const marginX = 44;
+    const topMargin = 28;
+    const colGap = (GAME_WIDTH - marginX * 2) / winCols;
+    const winAreaH = bldgH - topMargin - 58;
+    const rowGap = winAreaH / winRows;
+
+    // Stairwell bay separators — darker vertical strips between every 2 columns
+    ctx.fillStyle = "rgba(0, 0, 0, 0.09)";
+    for (let bay = 1; bay < winCols; bay += 2) {
+      const sepX = marginX + bay * colGap + (colGap - winW) * 0.5 + winW + 2;
+      ctx.fillRect(sepX, bldgY + 14, 8, bldgH - 60);
     }
 
-    ctx.fillStyle = "rgba(117, 95, 74, 0.32)";
-    ctx.fillRect(0, 462, GAME_WIDTH, 6);
-    ctx.fillRect(0, 488, GAME_WIDTH, 5);
+    for (let row = 0; row < winRows; row += 1) {
+      for (let col = 0; col < winCols; col += 1) {
+        const wx = marginX + col * colGap + (colGap - winW) * 0.5;
+        const wy = bldgY + topMargin + row * rowGap + (rowGap - winH) * 0.5;
 
+        // Window reveal (dark surround)
+        ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+        ctx.fillRect(wx - 2, wy - 2, winW + 4, winH + 4);
+
+        // Window glass — warm yellow for a few (lights on), blue-grey for most
+        const isLit = (row + col * 3) % 7 === 0 || (col + row * 5) % 11 === 0;
+        ctx.fillStyle = isLit ? "rgba(255, 238, 170, 0.80)" : "rgba(162, 196, 218, 0.70)";
+        ctx.fillRect(wx, wy, winW, winH);
+
+        // Highlight glint
+        ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
+        ctx.fillRect(wx + 2, wy + 2, winW * 0.45, 4);
+      }
+    }
+
+    // Balconies on rows 1 and 3, every 4th column
+    for (let col = 1; col < winCols; col += 4) {
+      for (const row of [1, 3]) {
+        const bx = marginX + col * colGap + (colGap - winW) * 0.5 - 5;
+        const by = bldgY + topMargin + row * rowGap + (rowGap - winH) * 0.5 + winH + 2;
+        const bw = winW + 10;
+        const bh = 13;
+
+        // Slab
+        ctx.fillStyle = "#8a7e72";
+        ctx.fillRect(bx, by, bw, bh);
+
+        // Railing top bar
+        ctx.strokeStyle = "rgba(205, 196, 185, 0.75)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx + bw, by);
+        ctx.stroke();
+
+        // Railing vertical bars
+        for (let rx = bx + 5; rx < bx + bw - 2; rx += 7) {
+          ctx.beginPath();
+          ctx.moveTo(rx, by);
+          ctx.lineTo(rx, by + bh);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // === Flanking wing — far-left gable end, 3 storeys, gives depth ===
+    const wingX = -10;
+    const wingY = 268;
+    const wingW = 148;
+    const wingH = 202;
+
+    ctx.fillStyle = "#cdc4b8";
+    ctx.fillRect(wingX, wingY, wingW, wingH);
+
+    // Pitched gable roof
+    ctx.fillStyle = "#9e9286";
+    ctx.beginPath();
+    ctx.moveTo(wingX, wingY);
+    ctx.lineTo(wingX + wingW * 0.5, wingY - 46);
+    ctx.lineTo(wingX + wingW, wingY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Wing windows (2 cols × 3 rows)
+    for (let row = 0; row < 3; row += 1) {
+      for (let col = 0; col < 2; col += 1) {
+        const wx = wingX + 26 + col * 58;
+        const wy = wingY + 18 + row * 60;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+        ctx.fillRect(wx - 2, wy - 2, 36, 28);
+        ctx.fillStyle = "rgba(162, 196, 218, 0.65)";
+        ctx.fillRect(wx, wy, 36, 28);
+      }
+    }
+
+    // === Flagpole ===
+    const poleX = 230;
+    const poleTopY = 202;
+    const poleBottomY = 494;
+
+    ctx.strokeStyle = "#909090";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "butt";
+    ctx.beginPath();
+    ctx.moveTo(poleX, poleTopY);
+    ctx.lineTo(poleX, poleBottomY);
+    ctx.stroke();
+
+    // Norwegian flag with gentle wave (shear transform)
+    const flagW = 28;
+    const flagH = 18;
+    const bend = Math.sin(state.time * 1.4) * 1.8;
+    ctx.save();
+    ctx.translate(poleX, poleTopY + 6);
+    ctx.transform(1, 0, bend / flagH, 1, 0, 0);
+
+    ctx.fillStyle = "#EF2B2D";
+    ctx.fillRect(0, 0, flagW, flagH);
+
+    // White Nordic cross
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, Math.round(flagH * 0.38), flagW, Math.round(flagH * 0.23));
+    ctx.fillRect(Math.round(flagW * 0.28), 0, Math.round(flagW * 0.17), flagH);
+
+    // Blue Nordic cross (inner, thinner)
+    ctx.fillStyle = "#002868";
+    ctx.fillRect(0, Math.round(flagH * 0.42), flagW, Math.round(flagH * 0.14));
+    ctx.fillRect(Math.round(flagW * 0.31), 0, Math.round(flagW * 0.11), flagH);
+
+    ctx.restore();
+
+    // === Birch trees — left of trampoline + one right ===
+    drawBirch(360, 1.0);
+    drawBirch(422, 0.88);
+    drawBirch(494, 1.06);
+    drawBirch(912, 0.93);
+
+    // === Norway spruce silhouette — far right ===
+    drawSpruce(1182);
+
+    // === Animated hedge strip ===
     ctx.fillStyle = "rgba(78, 128, 89, 0.76)";
     let hedgeIndex = 0;
     for (let x = -12; x < GAME_WIDTH + 92; x += 92) {
@@ -1238,41 +1358,90 @@
       ctx.fill();
       hedgeIndex += 1;
     }
+
+    // === Tarmac edge strip + parking lot dashes ===
+    ctx.fillStyle = "rgba(44, 44, 50, 0.42)";
+    ctx.fillRect(0, 462, GAME_WIDTH, 7);
+
+    ctx.strokeStyle = "rgba(210, 210, 210, 0.35)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([22, 22]);
+    ctx.beginPath();
+    ctx.moveTo(0, 466);
+    ctx.lineTo(GAME_WIDTH, 466);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // === Bike rack — near right side ===
+    const rackX = GAME_WIDTH - 176;
+    const rackY = 492;
+    ctx.strokeStyle = "#585858";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(rackX,      rackY);
+    ctx.lineTo(rackX + 11, rackY - 18);
+    ctx.moveTo(rackX + 20, rackY);
+    ctx.lineTo(rackX + 31, rackY - 18);
+    ctx.moveTo(rackX + 1,  rackY - 18);
+    ctx.lineTo(rackX + 30, rackY - 18);
+    ctx.stroke();
+    ctx.lineCap = "butt";
   }
 
-  function drawBuilding(x, y, w, h, wallColor, shadeColor) {
-    const g = ctx.createLinearGradient(x, y, x + w, y + h);
-    g.addColorStop(0, wallColor);
-    g.addColorStop(1, shadeColor);
-    ctx.fillStyle = g;
-    roundedRect(ctx, x, y, w, h, 12);
-    ctx.fill();
+  // Birch tree — trunk rooted at ground (y=600), visible above hedge (y=495)
+  function drawBirch(x, scale) {
+    const baseY = 600;
+    const trunkH = 180 * scale;
+    const trunkW = 7 * scale;
+    const trunkTopY = baseY - trunkH;
 
-    ctx.fillStyle = "rgba(106, 132, 151, 0.24)";
-    roundedRect(ctx, x + 10, y + 12, w - 20, h - 24, 10);
-    ctx.fill();
+    // White-ish bark
+    ctx.fillStyle = "#f4f0e8";
+    ctx.fillRect(x - trunkW * 0.5, trunkTopY, trunkW, trunkH);
 
-    const cols = 4;
-    const rows = 5;
-    const gapX = (w - 52) / cols;
-    const gapY = (h - 70) / rows;
-    for (let row = 0; row < rows; row += 1) {
-      for (let col = 0; col < cols; col += 1) {
-        const wx = x + 16 + col * gapX;
-        const wy = y + 18 + row * gapY;
-        ctx.fillStyle = row === 0 && col % 2 === 0 ? "rgba(255, 236, 164, 0.75)" : "rgba(225, 244, 255, 0.68)";
-        roundedRect(ctx, wx, wy, 30, 24, 5);
-        ctx.fill();
-      }
+    // Dark horizontal bark marks
+    ctx.fillStyle = "rgba(45, 36, 30, 0.52)";
+    for (let i = 0; i < 6; i += 1) {
+      const markY = trunkTopY + 10 + i * 28 * scale;
+      ctx.fillRect(x - trunkW * 0.5 - 1, markY, trunkW + 2, 2);
     }
 
-    ctx.fillStyle = "rgba(0, 0, 0, 0.11)";
-    for (let i = 0; i < cols; i += 1) {
-      const bx = x + 22 + i * gapX;
-      ctx.fillRect(bx, y + 58, 36, 6);
-      ctx.fillRect(bx, y + 126, 36, 6);
-      ctx.fillRect(bx, y + 194, 36, 6);
-    }
+    // Crown — loose overlapping ellipses
+    const cY = trunkTopY - 5;
+    ctx.fillStyle = "#7aaa68";
+    ctx.beginPath();
+    ctx.ellipse(x,              cY - 8,  30 * scale, 44 * scale, 0,    0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#5e9050";
+    ctx.beginPath();
+    ctx.ellipse(x - 18 * scale, cY + 6,  24 * scale, 32 * scale, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#6fa25c";
+    ctx.beginPath();
+    ctx.ellipse(x + 16 * scale, cY - 4,  22 * scale, 30 * scale,  0.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Norway spruce — dark triangle silhouette for depth
+  function drawSpruce(x) {
+    const baseY = 490;
+    ctx.fillStyle = "#2d4a32";
+    ctx.beginPath();
+    ctx.moveTo(x,      baseY - 165);
+    ctx.lineTo(x - 52, baseY);
+    ctx.lineTo(x + 52, baseY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Subtle right-side shadow gives slight 3-D shape
+    ctx.fillStyle = "rgba(0, 0, 0, 0.16)";
+    ctx.beginPath();
+    ctx.moveTo(x,      baseY - 165);
+    ctx.lineTo(x + 8,  baseY - 40);
+    ctx.lineTo(x + 52, baseY);
+    ctx.closePath();
+    ctx.fill();
   }
 
   function drawCourtyard() {
@@ -1807,7 +1976,7 @@
     ctx.fill();
 
     ctx.fillStyle = enemy.scooterText;
-    ctx.font = "800 9px Manrope";
+    ctx.font = "800 11px Manrope";
     ctx.textAlign = "center";
     ctx.fillText(enemy.scooterBrand, 0, 41.3);
 
@@ -1956,7 +2125,7 @@
       const y = enemy.y - 24;
 
       const text = "Slutt å stirr gamle mann";
-      ctx.font = "700 15px Manrope";
+      ctx.font = "700 18px Manrope";
       const textW = ctx.measureText(text).width;
 
       const bubbleW = textW + 20;
@@ -2018,12 +2187,12 @@
   function drawCryBanner() {
     const pulse = 0.55 + Math.sin(state.time * 5.2) * 0.18;
     ctx.fillStyle = `rgba(255, 241, 220, ${pulse * 0.58})`;
-    roundedRect(ctx, TRAMPOLINE.x - 132, TRAMPOLINE.y - 112, 264, 38, 12);
+    roundedRect(ctx, TRAMPOLINE.x - 110, TRAMPOLINE.y - 112, 220, 38, 12);
     ctx.fill();
 
     ctx.fillStyle = "rgba(60, 45, 43, 0.9)";
     ctx.textAlign = "center";
-    ctx.font = "800 21px Baloo 2";
+    ctx.font = "800 28px Baloo 2";
     ctx.fillText("BUHU!", TRAMPOLINE.x, TRAMPOLINE.y - 86);
   }
 
@@ -2033,12 +2202,12 @@
     const y = 116 - (1 - t) * 12;
 
     ctx.fillStyle = `rgba(255, 247, 216, ${alpha * 0.8})`;
-    roundedRect(ctx, TRAMPOLINE.x - 168, y - 24, 336, 46, 14);
+    roundedRect(ctx, TRAMPOLINE.x - 140, y - 24, 280, 46, 14);
     ctx.fill();
 
     ctx.fillStyle = `rgba(41, 52, 63, ${alpha})`;
     ctx.textAlign = "center";
-    ctx.font = "800 28px Baloo 2";
+    ctx.font = "800 36px Baloo 2";
     ctx.fillText(state.waveMessage, TRAMPOLINE.x, y + 8);
   }
 
@@ -2057,7 +2226,7 @@
     ctx.textAlign = "right";
     ctx.textBaseline = "top";
 
-    ctx.font = "800 52px Baloo 2";
+    ctx.font = "800 68px Baloo 2";
     ctx.fillStyle = "rgba(10, 30, 45, 0.28)";
     ctx.fillText(label, GAME_WIDTH - pad + 2, pad + 2);
 

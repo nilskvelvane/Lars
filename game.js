@@ -4,10 +4,6 @@
   const canvas = document.getElementById("gameCanvas");
   const titleOverlay = document.getElementById("titleOverlay");
   const gameOverOverlay = document.getElementById("gameOverOverlay");
-  const scoreValue = document.getElementById("scoreValue");
-  const bestValue = document.getElementById("bestValue");
-  const comboValue = document.getElementById("comboValue");
-  const waveValue = document.getElementById("waveValue");
   const gameOverScore = document.getElementById("gameOverScore");
   const startButton = document.getElementById("startButton");
   const retryButton = document.getElementById("retryButton");
@@ -22,15 +18,17 @@
     throw new Error("Klarte ikke opprette 2D-kontekst.");
   }
 
-  const GAME_WIDTH = 1536;
+  const GAME_WIDTH = 1280;
   const GAME_HEIGHT = 720;
-  const viewport = {
-    scale: 1,
-    offsetX: 0,
-    offsetY: 0,
-    pixelWidth: GAME_WIDTH,
-    pixelHeight: GAME_HEIGHT,
-  };
+
+  var engine = new Engine({
+    canvas:       '#gameCanvas',
+    width:        GAME_WIDTH,
+    height:       GAME_HEIGHT,
+    background:   '#000000',
+    maxDeltaTime: 0.04,
+    orientation:  'any'
+  });
 
   const FLOOR_Y = 618;
   const PLAY_LEFT = 22;
@@ -38,7 +36,7 @@
 
   const TRAMPOLINE = {
     x: GAME_WIDTH * 0.5,
-    y: 520,
+    y: 590,
     width: 250,
     height: 28,
     bounce: 760,
@@ -119,12 +117,7 @@
 
   const BOING_COLORS = ["#ffd166", "#ff7b72", "#4cc9f0", "#b8f2e6", "#fff4a3"];
 
-  const input = {
-    left: false,
-    right: false,
-    jumpHeld: false,
-    jumpPressed: false,
-  };
+  var input = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 
   const larsPhoto = new Image();
   let larsPhotoReady = false;
@@ -155,7 +148,6 @@
     spawnTimer: 1.35,
     nextEnemyId: 1,
     cryTimer: 0.6,
-    cameraShake: 0,
     flash: 0,
     trampolineKick: 0,
     trampolineWaves: [],
@@ -172,17 +164,9 @@
   };
 
   syncHud();
-  resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
 
   startButton?.addEventListener("click", startRound);
   retryButton?.addEventListener("click", startRound);
-
-  bindKeyboard();
-  bindTouchControls();
-
-  let lastTime = performance.now();
-  requestAnimationFrame(gameLoop);
 
   function createPlayer() {
     return {
@@ -214,156 +198,38 @@
     }));
   }
 
-  function resizeCanvas() {
-    const host = canvas.parentElement;
-    const hostWidth = host ? host.clientWidth : 0;
-    const hostHeight = host ? host.clientHeight : 0;
-    const cssWidth = Math.max(1, hostWidth || window.innerWidth);
-    const cssHeight = Math.max(1, hostHeight || window.innerHeight);
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var touchInput = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 
-    canvas.width = Math.max(1, Math.floor(cssWidth * dpr));
-    canvas.height = Math.max(1, Math.floor(cssHeight * dpr));
-
-    viewport.pixelWidth = canvas.width;
-    viewport.pixelHeight = canvas.height;
-
-    viewport.scale = Math.min(canvas.width / GAME_WIDTH, canvas.height / GAME_HEIGHT);
-    viewport.offsetX = (canvas.width - GAME_WIDTH * viewport.scale) * 0.5;
-    viewport.offsetY = (canvas.height - GAME_HEIGHT * viewport.scale) * 0.5;
-  }
-
-  function bindKeyboard() {
-    const PREVENT = new Set([
-      "ArrowLeft",
-      "ArrowRight",
-      "ArrowUp",
-      "ArrowDown",
-      "KeyA",
-      "KeyD",
-      "KeyW",
-      "Space",
-      "Enter",
-    ]);
-
-    window.addEventListener(
-      "keydown",
-      (event) => {
-        if (PREVENT.has(event.code)) {
-          event.preventDefault();
-        }
-
-        const startKey = event.code === "Enter" || event.code === "Space";
-        if (startKey && state.mode !== "playing" && !event.repeat) {
-          startRound();
-          return;
-        }
-
-        if (state.mode !== "playing") {
-          return;
-        }
-
-        if (event.code === "ArrowLeft" || event.code === "KeyA") {
-          input.left = true;
-          state.player.face = -1;
-        }
-        if (event.code === "ArrowRight" || event.code === "KeyD") {
-          input.right = true;
-          state.player.face = 1;
-        }
-        if (event.code === "ArrowUp" || event.code === "KeyW" || event.code === "Space") {
-          input.jumpHeld = true;
-          if (!event.repeat) {
-            input.jumpPressed = true;
-          }
-        }
-      },
-      { passive: false },
-    );
-
-    window.addEventListener(
-      "keyup",
-      (event) => {
-        if (PREVENT.has(event.code)) {
-          event.preventDefault();
-        }
-
-        if (event.code === "ArrowLeft" || event.code === "KeyA") {
-          input.left = false;
-        }
-        if (event.code === "ArrowRight" || event.code === "KeyD") {
-          input.right = false;
-        }
-        if (event.code === "ArrowUp" || event.code === "KeyW" || event.code === "Space") {
-          input.jumpHeld = false;
-        }
-      },
-      { passive: false },
-    );
-  }
-
-  function bindTouchControls() {
-    if (!touchButtons.length) {
-      return;
-    }
-
-    const releaseAll = () => {
-      for (const button of touchButtons) {
-        button.classList.remove("active");
+  (function bindTouchButtons() {
+    touchButtons.forEach(function (btn) {
+      var action = btn.dataset.action;
+      btn.addEventListener("pointerdown", function (e) {
+        e.preventDefault();
+        if (state.mode !== "playing") { startRound(); }
+        btn.classList.add("active");
+        touchInput[action === "jump" ? "jumpHeld" : action] = true;
+        if (action === "jump") { touchInput.jumpPressed = true; }
+        if (action === "left")  { state.player.face = -1; }
+        if (action === "right") { state.player.face =  1; }
+      });
+      function release() {
+        btn.classList.remove("active");
+        touchInput[action === "jump" ? "jumpHeld" : action] = false;
       }
-      input.left = false;
-      input.right = false;
-      input.jumpHeld = false;
-    };
+      btn.addEventListener("pointerup",     release);
+      btn.addEventListener("pointercancel", release);
+      btn.addEventListener("pointerleave",  release);
+    });
+    window.addEventListener("pointerup",     function () { touchInput.left = touchInput.right = touchInput.jumpHeld = false; });
+    window.addEventListener("pointercancel", function () { touchInput.left = touchInput.right = touchInput.jumpHeld = false; });
 
-    for (const button of touchButtons) {
-      const action = button.dataset.action;
-      if (!action) {
-        continue;
+    // Also handle Enter/Space to start the game (not in playing mode)
+    window.addEventListener("keydown", function (e) {
+      if ((e.code === "Enter" || e.code === "Space") && state.mode !== "playing" && !e.repeat) {
+        startRound();
       }
-
-      const activate = (event) => {
-        event.preventDefault();
-
-        if (state.mode !== "playing") {
-          startRound();
-        }
-
-        button.classList.add("active");
-        if (action === "left") {
-          input.left = true;
-          state.player.face = -1;
-        } else if (action === "right") {
-          input.right = true;
-          state.player.face = 1;
-        } else if (action === "jump") {
-          input.jumpHeld = true;
-          input.jumpPressed = true;
-        }
-      };
-
-      const deactivate = (event) => {
-        event.preventDefault();
-        button.classList.remove("active");
-
-        if (action === "left") {
-          input.left = false;
-        } else if (action === "right") {
-          input.right = false;
-        } else if (action === "jump") {
-          input.jumpHeld = false;
-        }
-      };
-
-      button.addEventListener("pointerdown", activate, { passive: false });
-      button.addEventListener("pointerup", deactivate, { passive: false });
-      button.addEventListener("pointercancel", deactivate, { passive: false });
-      button.addEventListener("pointerleave", deactivate, { passive: false });
-    }
-
-    window.addEventListener("pointerup", releaseAll, { passive: true });
-    window.addEventListener("pointercancel", releaseAll, { passive: true });
-  }
+    });
+  })();
 
   function ensureAudio() {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -541,7 +407,6 @@
     state.waveMessage = "";
     state.spawnTimer = 1.35;
     state.nextEnemyId = 1;
-    state.cameraShake = 0;
     state.flash = 0;
     state.trampolineKick = 0;
     state.trampolineWaves.length = 0;
@@ -594,7 +459,10 @@
     playGameOverSting();
 
     if (gameOverScore) {
-      gameOverScore.textContent = `Score: ${state.score}`;
+      const isNewBest = state.score >= state.best;
+      gameOverScore.textContent = isNewBest
+        ? `Ny rekord: ${state.score} poeng!`
+        : `${state.score} poeng — rekord: ${state.best}`;
     }
     if (gameOverOverlay) {
       gameOverOverlay.hidden = false;
@@ -603,25 +471,19 @@
     syncHud();
   }
 
-  function gameLoop(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.04);
-    lastTime = now;
-
-    update(dt);
-    render();
-
-    input.jumpPressed = false;
-    requestAnimationFrame(gameLoop);
-  }
-
   function update(dt) {
+    input.left        = engine.input.isDown("left")      || touchInput.left;
+    input.right       = engine.input.isDown("right")     || touchInput.right;
+    input.jumpHeld    = engine.input.isDown("jump")      || touchInput.jumpHeld;
+    input.jumpPressed = engine.input.justPressed("jump") || touchInput.jumpPressed;
+    touchInput.jumpPressed = false;
+
     state.time += dt;
     updateClouds(dt);
     updateKids(dt);
     updateEffects(dt);
 
     state.flash = Math.max(0, state.flash - dt * 2.4);
-    state.cameraShake = Math.max(0, state.cameraShake - dt * 28);
     state.waveBannerTimer = Math.max(0, state.waveBannerTimer - dt);
 
     if (state.mode === "title") {
@@ -765,11 +627,11 @@
         player.vy = -TRAMPOLINE.boostBounce;
         playBoing(true);
         triggerTrampolineImpact(1.1);
-        state.cameraShake = Math.max(state.cameraShake, 10);
+        engine.camera.shake(10, 0.36);
       } else {
         player.vy = -PLAYER.groundJump;
         playBoing(false);
-        state.cameraShake = Math.max(state.cameraShake, 5);
+        engine.camera.shake(5, 0.18);
       }
       player.onGround = false;
       player.onTrampoline = overTrampoline;
@@ -807,7 +669,7 @@
 
       playBoing(boosted);
       triggerTrampolineImpact(boosted ? 1.08 : autoPassBounce ? 0.9 : 1.0);
-      state.cameraShake = Math.max(state.cameraShake, boosted ? 10 : 7);
+      engine.camera.shake(boosted ? 10 : 7, boosted ? 0.36 : 0.25);
     } else if (nowBottom >= FLOOR_Y) {
       player.y = FLOOR_Y - player.h;
       player.vy = 0;
@@ -1150,7 +1012,7 @@
     const points = 110 + (state.combo - 1) * 35 + duoBonus;
     state.score += points;
     state.flash = 0.2;
-    state.cameraShake = Math.max(state.cameraShake, 8 + Math.min(10, state.combo));
+    engine.camera.shake(8 + Math.min(10, state.combo), (8 + Math.min(10, state.combo)) / 28);
 
     const player = state.player;
     const playerCenter = player.x + player.w * 0.5;
@@ -1187,7 +1049,7 @@
       maxLife: 0.86,
       phase: randRange(0, Math.PI * 2),
       color: "#fff2ad",
-      size: 34,
+      size: 42,
       weight: 800,
     });
 
@@ -1200,7 +1062,7 @@
       maxLife: 0.9,
       phase: randRange(0, Math.PI * 2),
       color: "#f5fbff",
-      size: 27,
+      size: 33,
       weight: 700,
     });
 
@@ -1214,7 +1076,7 @@
         maxLife: 0.84,
         phase: randRange(0, Math.PI * 2),
         color: "#baf7ff",
-        size: 21,
+        size: 27,
         weight: 800,
       });
     }
@@ -1229,7 +1091,7 @@
         maxLife: 0.88,
         phase: randRange(0, Math.PI * 2),
         color: "#ffe7ae",
-        size: 22,
+        size: 27,
         weight: 800,
       });
     }
@@ -1260,29 +1122,10 @@
   }
 
   function render() {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, viewport.pixelWidth, viewport.pixelHeight);
-
-    const frameSky = ctx.createLinearGradient(0, 0, 0, viewport.pixelHeight);
-    frameSky.addColorStop(0, "#f5fcff");
-    frameSky.addColorStop(0.5, "#def1fb");
-    frameSky.addColorStop(1, "#c2e0ef");
-    ctx.fillStyle = frameSky;
-    ctx.fillRect(0, 0, viewport.pixelWidth, viewport.pixelHeight);
-
-    ctx.save();
-    ctx.translate(viewport.offsetX, viewport.offsetY);
-    ctx.scale(viewport.scale, viewport.scale);
-
-    if (state.cameraShake > 0) {
-      const shake = state.cameraShake;
-      ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
-    }
-
     drawBackground();
     drawBuildings();
-    drawCourtyard();
     drawTrampoline(false);
+    drawCourtyard();
     drawKids();
     drawEnemies();
     drawPlayer(state.player);
@@ -1303,53 +1146,26 @@
       ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     }
 
-    ctx.restore();
+    if (state.mode === "playing" || state.mode === "gameover") {
+      drawScore();
+    }
   }
 
   function drawBackground() {
-    const w = GAME_WIDTH;
-
+    // Norwegian overcast-ish sky — muted but not grey
     const sky = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
-    sky.addColorStop(0, "#f9fdff");
-    sky.addColorStop(0.45, "#e3f4ff");
-    sky.addColorStop(1, "#c8e4f2");
+    sky.addColorStop(0, "#e8f4fa");
+    sky.addColorStop(0.45, "#d0e8f5");
+    sky.addColorStop(1, "#c2d8e8");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
+    // Warm morning light band at top
     const lightBand = ctx.createLinearGradient(0, 0, 0, 260);
-    lightBand.addColorStop(0, "rgba(255, 249, 228, 0.78)");
+    lightBand.addColorStop(0, "rgba(255, 249, 228, 0.68)");
     lightBand.addColorStop(1, "rgba(255, 249, 228, 0)");
     ctx.fillStyle = lightBand;
     ctx.fillRect(0, 0, GAME_WIDTH, 260);
-
-    ctx.fillStyle = "rgba(177, 206, 222, 0.54)";
-    ctx.beginPath();
-    ctx.moveTo(0, 420);
-    ctx.lineTo(w * 0.125, 394);
-    ctx.lineTo(w * 0.25, 406);
-    ctx.lineTo(w * 0.4, 384);
-    ctx.lineTo(w * 0.567, 402);
-    ctx.lineTo(w * 0.717, 390);
-    ctx.lineTo(w * 0.867, 408);
-    ctx.lineTo(w, 392);
-    ctx.lineTo(w, 520);
-    ctx.lineTo(0, 520);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(157, 188, 208, 0.58)";
-    ctx.beginPath();
-    ctx.moveTo(0, 456);
-    ctx.lineTo(w * 0.15, 438);
-    ctx.lineTo(w * 0.3, 448);
-    ctx.lineTo(w * 0.467, 430);
-    ctx.lineTo(w * 0.633, 446);
-    ctx.lineTo(w * 0.8, 434);
-    ctx.lineTo(w, 452);
-    ctx.lineTo(w, 528);
-    ctx.lineTo(0, 528);
-    ctx.closePath();
-    ctx.fill();
 
     for (const cloud of state.clouds) {
       const bob = Math.sin(state.time * 0.5 + cloud.phase) * 3;
@@ -1367,24 +1183,173 @@
   }
 
   function drawBuildings() {
-    const rightBuildingX = GAME_WIDTH - 370;
+    // === Main apartment block — full-width brick, 6 storeys ===
+    const bldgY = 100;
+    const bldgH = 370; // bottom edge at y=470
 
-    drawBuilding(70, 228, 300, 272, "#e5dfd6", "#cec5bb");
-    drawBuilding(rightBuildingX, 210, 290, 290, "#e2d5cd", "#c8b9af");
+    // Brick facade
+    ctx.fillStyle = "#b5705a";
+    ctx.fillRect(0, bldgY, GAME_WIDTH, bldgH);
 
-    ctx.fillStyle = "rgba(144, 118, 88, 0.36)";
-    let postIndex = 0;
-    for (let x = 18; x < GAME_WIDTH + 22; x += 42) {
-      const h = 26 + ((postIndex * 11) % 8);
-      roundedRect(ctx, x, 480 - h, 18, h, 3);
-      ctx.fill();
-      postIndex += 1;
+    // Concrete coping at parapet top
+    ctx.fillStyle = "#d0c8be";
+    ctx.fillRect(0, bldgY, GAME_WIDTH, 14);
+
+    // Concrete base band (bottom)
+    ctx.fillStyle = "#d0c8be";
+    ctx.fillRect(0, bldgY + bldgH - 46, GAME_WIDTH, 46);
+
+    // Left-side shadow for depth
+    const leftShadow = ctx.createLinearGradient(0, 0, 110, 0);
+    leftShadow.addColorStop(0, "rgba(0, 0, 0, 0.20)");
+    leftShadow.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = leftShadow;
+    ctx.fillRect(0, bldgY, 110, bldgH);
+
+    // Window grid: 6 rows × 14 columns
+    const winCols = 14;
+    const winRows = 6;
+    const winW = 52;
+    const winH = 36;
+    const marginX = 44;
+    const topMargin = 28;
+    const colGap = (GAME_WIDTH - marginX * 2) / winCols;
+    const winAreaH = bldgH - topMargin - 58;
+    const rowGap = winAreaH / winRows;
+
+    // Stairwell bay separators — darker vertical strips between every 2 columns
+    ctx.fillStyle = "rgba(0, 0, 0, 0.09)";
+    for (let bay = 1; bay < winCols; bay += 2) {
+      const sepX = marginX + bay * colGap + (colGap - winW) * 0.5 + winW + 2;
+      ctx.fillRect(sepX, bldgY + 14, 8, bldgH - 60);
     }
 
-    ctx.fillStyle = "rgba(117, 95, 74, 0.32)";
-    ctx.fillRect(0, 462, GAME_WIDTH, 6);
-    ctx.fillRect(0, 488, GAME_WIDTH, 5);
+    for (let row = 0; row < winRows; row += 1) {
+      for (let col = 0; col < winCols; col += 1) {
+        const wx = marginX + col * colGap + (colGap - winW) * 0.5;
+        const wy = bldgY + topMargin + row * rowGap + (rowGap - winH) * 0.5;
 
+        // Window reveal (dark surround)
+        ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+        ctx.fillRect(wx - 2, wy - 2, winW + 4, winH + 4);
+
+        // Window glass — warm yellow for a few (lights on), blue-grey for most
+        const isLit = (row + col * 3) % 7 === 0 || (col + row * 5) % 11 === 0;
+        ctx.fillStyle = isLit ? "rgba(255, 238, 170, 0.80)" : "rgba(162, 196, 218, 0.70)";
+        ctx.fillRect(wx, wy, winW, winH);
+
+        // Highlight glint
+        ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
+        ctx.fillRect(wx + 2, wy + 2, winW * 0.45, 4);
+      }
+    }
+
+    // Balconies on rows 1 and 3, every 4th column
+    for (let col = 1; col < winCols; col += 4) {
+      for (const row of [1, 3]) {
+        const bx = marginX + col * colGap + (colGap - winW) * 0.5 - 5;
+        const by = bldgY + topMargin + row * rowGap + (rowGap - winH) * 0.5 + winH + 2;
+        const bw = winW + 10;
+        const bh = 13;
+
+        // Slab
+        ctx.fillStyle = "#8a7e72";
+        ctx.fillRect(bx, by, bw, bh);
+
+        // Railing top bar
+        ctx.strokeStyle = "rgba(205, 196, 185, 0.75)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx + bw, by);
+        ctx.stroke();
+
+        // Railing vertical bars
+        for (let rx = bx + 5; rx < bx + bw - 2; rx += 7) {
+          ctx.beginPath();
+          ctx.moveTo(rx, by);
+          ctx.lineTo(rx, by + bh);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // === Flanking wing — far-left gable end, 3 storeys, gives depth ===
+    const wingX = -10;
+    const wingY = 268;
+    const wingW = 148;
+    const wingH = 202;
+
+    ctx.fillStyle = "#cdc4b8";
+    ctx.fillRect(wingX, wingY, wingW, wingH);
+
+    // Pitched gable roof
+    ctx.fillStyle = "#9e9286";
+    ctx.beginPath();
+    ctx.moveTo(wingX, wingY);
+    ctx.lineTo(wingX + wingW * 0.5, wingY - 46);
+    ctx.lineTo(wingX + wingW, wingY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Wing windows (2 cols × 3 rows)
+    for (let row = 0; row < 3; row += 1) {
+      for (let col = 0; col < 2; col += 1) {
+        const wx = wingX + 26 + col * 58;
+        const wy = wingY + 18 + row * 60;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+        ctx.fillRect(wx - 2, wy - 2, 36, 28);
+        ctx.fillStyle = "rgba(162, 196, 218, 0.65)";
+        ctx.fillRect(wx, wy, 36, 28);
+      }
+    }
+
+    // === Flagpole ===
+    const poleX = 230;
+    const poleTopY = 202;
+    const poleBottomY = 494;
+
+    ctx.strokeStyle = "#909090";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "butt";
+    ctx.beginPath();
+    ctx.moveTo(poleX, poleTopY);
+    ctx.lineTo(poleX, poleBottomY);
+    ctx.stroke();
+
+    // Norwegian flag with gentle wave (shear transform)
+    const flagW = 28;
+    const flagH = 18;
+    const bend = Math.sin(state.time * 1.4) * 1.8;
+    ctx.save();
+    ctx.translate(poleX, poleTopY + 6);
+    ctx.transform(1, 0, bend / flagH, 1, 0, 0);
+
+    ctx.fillStyle = "#EF2B2D";
+    ctx.fillRect(0, 0, flagW, flagH);
+
+    // White Nordic cross
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, Math.round(flagH * 0.38), flagW, Math.round(flagH * 0.23));
+    ctx.fillRect(Math.round(flagW * 0.28), 0, Math.round(flagW * 0.17), flagH);
+
+    // Blue Nordic cross (inner, thinner)
+    ctx.fillStyle = "#002868";
+    ctx.fillRect(0, Math.round(flagH * 0.42), flagW, Math.round(flagH * 0.14));
+    ctx.fillRect(Math.round(flagW * 0.31), 0, Math.round(flagW * 0.11), flagH);
+
+    ctx.restore();
+
+    // === Birch trees — left of trampoline + one right ===
+    drawBirch(360, 1.0);
+    drawBirch(422, 0.88);
+    drawBirch(494, 1.06);
+    drawBirch(912, 0.93);
+
+    // === Norway spruce silhouette — far right ===
+    drawSpruce(1182);
+
+    // === Animated hedge strip ===
     ctx.fillStyle = "rgba(78, 128, 89, 0.76)";
     let hedgeIndex = 0;
     for (let x = -12; x < GAME_WIDTH + 92; x += 92) {
@@ -1393,41 +1358,90 @@
       ctx.fill();
       hedgeIndex += 1;
     }
+
+    // === Tarmac edge strip + parking lot dashes ===
+    ctx.fillStyle = "rgba(44, 44, 50, 0.42)";
+    ctx.fillRect(0, 462, GAME_WIDTH, 7);
+
+    ctx.strokeStyle = "rgba(210, 210, 210, 0.35)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([22, 22]);
+    ctx.beginPath();
+    ctx.moveTo(0, 466);
+    ctx.lineTo(GAME_WIDTH, 466);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // === Bike rack — near right side ===
+    const rackX = GAME_WIDTH - 176;
+    const rackY = 492;
+    ctx.strokeStyle = "#585858";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(rackX,      rackY);
+    ctx.lineTo(rackX + 11, rackY - 18);
+    ctx.moveTo(rackX + 20, rackY);
+    ctx.lineTo(rackX + 31, rackY - 18);
+    ctx.moveTo(rackX + 1,  rackY - 18);
+    ctx.lineTo(rackX + 30, rackY - 18);
+    ctx.stroke();
+    ctx.lineCap = "butt";
   }
 
-  function drawBuilding(x, y, w, h, wallColor, shadeColor) {
-    const g = ctx.createLinearGradient(x, y, x + w, y + h);
-    g.addColorStop(0, wallColor);
-    g.addColorStop(1, shadeColor);
-    ctx.fillStyle = g;
-    roundedRect(ctx, x, y, w, h, 12);
-    ctx.fill();
+  // Birch tree — trunk rooted at ground (y=600), visible above hedge (y=495)
+  function drawBirch(x, scale) {
+    const baseY = 600;
+    const trunkH = 180 * scale;
+    const trunkW = 7 * scale;
+    const trunkTopY = baseY - trunkH;
 
-    ctx.fillStyle = "rgba(106, 132, 151, 0.24)";
-    roundedRect(ctx, x + 10, y + 12, w - 20, h - 24, 10);
-    ctx.fill();
+    // White-ish bark
+    ctx.fillStyle = "#f4f0e8";
+    ctx.fillRect(x - trunkW * 0.5, trunkTopY, trunkW, trunkH);
 
-    const cols = 4;
-    const rows = 5;
-    const gapX = (w - 52) / cols;
-    const gapY = (h - 70) / rows;
-    for (let row = 0; row < rows; row += 1) {
-      for (let col = 0; col < cols; col += 1) {
-        const wx = x + 16 + col * gapX;
-        const wy = y + 18 + row * gapY;
-        ctx.fillStyle = row === 0 && col % 2 === 0 ? "rgba(255, 236, 164, 0.75)" : "rgba(225, 244, 255, 0.68)";
-        roundedRect(ctx, wx, wy, 30, 24, 5);
-        ctx.fill();
-      }
+    // Dark horizontal bark marks
+    ctx.fillStyle = "rgba(45, 36, 30, 0.52)";
+    for (let i = 0; i < 6; i += 1) {
+      const markY = trunkTopY + 10 + i * 28 * scale;
+      ctx.fillRect(x - trunkW * 0.5 - 1, markY, trunkW + 2, 2);
     }
 
-    ctx.fillStyle = "rgba(0, 0, 0, 0.11)";
-    for (let i = 0; i < cols; i += 1) {
-      const bx = x + 22 + i * gapX;
-      ctx.fillRect(bx, y + 58, 36, 6);
-      ctx.fillRect(bx, y + 126, 36, 6);
-      ctx.fillRect(bx, y + 194, 36, 6);
-    }
+    // Crown — loose overlapping ellipses
+    const cY = trunkTopY - 5;
+    ctx.fillStyle = "#7aaa68";
+    ctx.beginPath();
+    ctx.ellipse(x,              cY - 8,  30 * scale, 44 * scale, 0,    0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#5e9050";
+    ctx.beginPath();
+    ctx.ellipse(x - 18 * scale, cY + 6,  24 * scale, 32 * scale, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#6fa25c";
+    ctx.beginPath();
+    ctx.ellipse(x + 16 * scale, cY - 4,  22 * scale, 30 * scale,  0.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Norway spruce — dark triangle silhouette for depth
+  function drawSpruce(x) {
+    const baseY = 490;
+    ctx.fillStyle = "#2d4a32";
+    ctx.beginPath();
+    ctx.moveTo(x,      baseY - 165);
+    ctx.lineTo(x - 52, baseY);
+    ctx.lineTo(x + 52, baseY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Subtle right-side shadow gives slight 3-D shape
+    ctx.fillStyle = "rgba(0, 0, 0, 0.16)";
+    ctx.beginPath();
+    ctx.moveTo(x,      baseY - 165);
+    ctx.lineTo(x + 8,  baseY - 40);
+    ctx.lineTo(x + 52, baseY);
+    ctx.closePath();
+    ctx.fill();
   }
 
   function drawCourtyard() {
@@ -1962,7 +1976,7 @@
     ctx.fill();
 
     ctx.fillStyle = enemy.scooterText;
-    ctx.font = "800 9px Manrope";
+    ctx.font = "800 11px Manrope";
     ctx.textAlign = "center";
     ctx.fillText(enemy.scooterBrand, 0, 41.3);
 
@@ -2110,8 +2124,8 @@
       const x = enemy.x + enemy.w * 0.5;
       const y = enemy.y - 24;
 
-      const text = "Hold kjeft gamle mann";
-      ctx.font = "700 15px Manrope";
+      const text = "Slutt å stirr gamle mann";
+      ctx.font = "700 18px Manrope";
       const textW = ctx.measureText(text).width;
 
       const bubbleW = textW + 20;
@@ -2173,12 +2187,12 @@
   function drawCryBanner() {
     const pulse = 0.55 + Math.sin(state.time * 5.2) * 0.18;
     ctx.fillStyle = `rgba(255, 241, 220, ${pulse * 0.58})`;
-    roundedRect(ctx, TRAMPOLINE.x - 132, TRAMPOLINE.y - 112, 264, 38, 12);
+    roundedRect(ctx, TRAMPOLINE.x - 110, TRAMPOLINE.y - 112, 220, 38, 12);
     ctx.fill();
 
     ctx.fillStyle = "rgba(60, 45, 43, 0.9)";
     ctx.textAlign = "center";
-    ctx.font = "800 21px Baloo 2";
+    ctx.font = "800 28px Baloo 2";
     ctx.fillText("BUHU!", TRAMPOLINE.x, TRAMPOLINE.y - 86);
   }
 
@@ -2188,57 +2202,50 @@
     const y = 116 - (1 - t) * 12;
 
     ctx.fillStyle = `rgba(255, 247, 216, ${alpha * 0.8})`;
-    roundedRect(ctx, TRAMPOLINE.x - 168, y - 24, 336, 46, 14);
+    roundedRect(ctx, TRAMPOLINE.x - 140, y - 24, 280, 46, 14);
     ctx.fill();
 
     ctx.fillStyle = `rgba(41, 52, 63, ${alpha})`;
     ctx.textAlign = "center";
-    ctx.font = "800 28px Baloo 2";
+    ctx.font = "800 36px Baloo 2";
     ctx.fillText(state.waveMessage, TRAMPOLINE.x, y + 8);
   }
 
   function syncHud() {
-    if (scoreValue) {
-      scoreValue.textContent = String(state.score);
-    }
-    if (bestValue) {
-      bestValue.textContent = String(state.best);
-    }
-    if (comboValue) {
-      comboValue.textContent = state.combo > 0 ? `x${state.combo}` : "0";
-    }
-    if (waveValue) {
-      waveValue.textContent = String(state.wave);
-    }
+    // Score is drawn on canvas; best is shown on game-over overlay.
   }
 
   function isScooterEnemy(enemy) {
     return enemy.type === "scooter" || enemy.type === "scooter_duo";
   }
 
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
+  function drawScore() {
+    const pad = 28;
+    const label = String(state.score);
+
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+
+    ctx.font = "800 68px Baloo 2";
+    ctx.fillStyle = "rgba(10, 30, 45, 0.28)";
+    ctx.fillText(label, GAME_WIDTH - pad + 2, pad + 2);
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+    ctx.fillText(label, GAME_WIDTH - pad, pad);
+
+    ctx.textBaseline = "alphabetic";
   }
 
-  function randRange(min, max) {
-    return min + Math.random() * (max - min);
-  }
-
-  function lerp(a, b, t) {
-    return a + (b - a) * clamp(t, 0, 1);
-  }
+  function clamp(v, lo, hi) { return engine.clamp(v, lo, hi); }
+  function lerp(a, b, t)    { return engine.lerp(a, b, t); }
+  function randRange(lo, hi) { return engine.random(lo, hi); }
 
   function choose(items) {
     return items[Math.floor(Math.random() * items.length)];
   }
 
   function rectsOverlap(a, b) {
-    return (
-      a.x < b.x + b.w &&
-      a.x + a.w > b.x &&
-      a.y < b.y + b.h &&
-      a.y + a.h > b.y
-    );
+    return engine.collide.rectRect(a.x, a.y, a.w, a.h, b.x, b.y, b.w, b.h);
   }
 
   function roundedRect(context, x, y, width, height, radius) {
@@ -2272,4 +2279,12 @@
 
     return color;
   }
+
+  engine.addScene("game", {
+    onEnter: function () {},
+    update:  function (dt) { update(dt); },
+    draw:    function (ctx) { render(); }
+  });
+  engine.switchScene("game");
+  engine.start();
 })();

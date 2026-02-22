@@ -23,74 +23,22 @@ body {
   margin: 0;
   width: 100%;
   height: 100%;
+  overflow: hidden;
 }
 
 body {
-  display: block;
-  padding: 0;
-  overflow: hidden;
-  font-family: "Manrope", "Segoe UI", sans-serif;
-  color: var(--ink);
-  background:
-    radial-gradient(circle at 14% 10%, rgba(255, 255, 255, 0.72), transparent 36%),
-    radial-gradient(circle at 84% 20%, rgba(247, 193, 109, 0.34), transparent 34%),
-    linear-gradient(160deg, var(--bg-top), var(--bg-mid) 48%, var(--bg-bottom));
-}
-
-.shell {
-  width: 100vw;
-  height: 100vh;
-  border-radius: 0;
-  border: 0;
-  box-shadow: none;
-  background:
-    linear-gradient(150deg, rgba(44, 106, 136, 0.82), rgba(75, 144, 175, 0.8)),
-    repeating-linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.045) 0 12px,
-      rgba(18, 58, 82, 0.06) 12px 24px
-    );
-  overflow: hidden;
-  display: grid;
-  grid-template-rows: auto 1fr auto auto;
-}
-
-.hero {
-  padding: 0.65rem 1rem 0.55rem;
-  border-bottom: 1px solid rgba(223, 248, 255, 0.38);
-}
-
-.hero h1 {
-  margin: 0;
-  font-family: "Baloo 2", cursive;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  font-size: clamp(1.55rem, 2.35vw, 2.2rem);
-  line-height: 1;
-}
-
-.hero p {
-  margin: 0.35rem 0 0;
-  max-width: 920px;
-  color: var(--ink-soft);
-  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  background: #000;
 }
 
 .stage-wrap {
   position: relative;
-  min-height: 0;
-  padding: 0;
-  background:
-    linear-gradient(180deg, rgba(194, 226, 241, 0.3), rgba(164, 202, 220, 0.44));
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
 }
 
 #gameCanvas {
-  width: 100%;
-  height: 100%;
   display: block;
-  border-radius: 0;
-  border: 0;
-  box-shadow: none;
   background: #a4c8da;
 }
 
@@ -100,7 +48,6 @@ body {
   display: grid;
   place-items: center;
   background: rgba(15, 37, 53, 0.36);
-  border-radius: 0;
 }
 
 .overlay[hidden] {
@@ -114,6 +61,8 @@ body {
   border: 1px solid var(--panel-border);
   background: var(--panel);
   box-shadow: 0 20px 70px rgba(6, 10, 16, 0.55);
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  color: var(--ink);
 }
 
 .panel h2 {
@@ -146,8 +95,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.03em;
   color: #1e2128;
-  background:
-    linear-gradient(180deg, #ffd67d, var(--accent));
+  background: linear-gradient(180deg, #ffd67d, var(--accent));
 }
 
 .btn-primary:hover {
@@ -163,69 +111,50 @@ body {
   color: rgba(230, 248, 255, 0.85);
 }
 
-.hud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.58rem;
-  padding: 0.7rem 1rem 0.2rem;
+.credits {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 12px;
 }
-
-.pill {
-  border: 1px solid rgba(217, 252, 255, 0.36);
-  border-radius: 999px;
-  padding: 0.35rem 0.78rem;
-  font-size: 0.9rem;
-  background: rgba(11, 47, 67, 0.33);
-  color: var(--ink-soft);
-}
-
-.pill span {
-  margin-left: 0.32rem;
-  font-weight: 800;
-  color: #fff;
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem 1rem;
-  padding: 0.72rem 1rem 0.95rem;
-  color: rgba(226, 248, 255, 0.93);
-  font-size: 0.84rem;
-  border-top: 1px solid rgba(180, 230, 255, 0.21);
+.credits a {
+  color: inherit;
 }
 
 .touch-controls {
   display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
 }
 
 @media (pointer: coarse), (max-width: 920px) {
   .touch-controls {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.65rem;
-    padding: 0.62rem 1rem 0;
+    gap: 0.5rem;
+    padding: 0.4rem 1.5rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
   }
 
   .touch-controls button {
-    border: 1px solid rgba(233, 252, 255, 0.45);
-    border-radius: 12px;
-    padding: 0.63rem 0.45rem;
-    font-family: "Baloo 2", cursive;
-    font-size: 0.95rem;
-    letter-spacing: 0.02em;
-    color: #eff8ff;
-    background: linear-gradient(180deg, rgba(36, 94, 124, 0.95), rgba(20, 60, 82, 0.96));
+    border: 1.5px solid rgba(255, 255, 255, 0.45);
+    border-radius: 14px;
+    padding: 0.45rem;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.18);
+    opacity: 0.38;
     touch-action: manipulation;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    transition: opacity 0.08s;
   }
 
   .touch-controls button.active {
-    box-shadow: 0 0 0 2px rgba(255, 233, 176, 0.62) inset;
-    filter: saturate(1.15) brightness(1.08);
-  }
-
-  .controls {
-    font-size: 0.79rem;
+    opacity: 0.82;
+    background: rgba(255, 200, 80, 0.25);
   }
 }
